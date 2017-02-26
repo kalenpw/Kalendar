@@ -9,7 +9,7 @@
 
     <CalendarView
         android:layout_width="match_parent"
-        android:layout_height="308dp"
+        android:layout_height="wrap_content"
         android:id="@+id/calendarView" />
 
     <Button
@@ -22,6 +22,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:inputType="textMultiLine"
+        android:layout_gravity="top"
         android:ems="10"
         android:id="@+id/editText" />
 

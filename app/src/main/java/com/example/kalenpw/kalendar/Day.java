@@ -37,7 +37,7 @@ public class Day {
     }
 
 
-    public boolean isSameDay(Day day){
+        public boolean isSameDay(Day day){
         boolean isEqual = false;
         if(_Day == day.getDay() && _Month == day.getMonth() && _Year == day.getYear()){
             isEqual = true;
