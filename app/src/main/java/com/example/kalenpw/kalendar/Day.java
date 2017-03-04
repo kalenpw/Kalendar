@@ -1,10 +1,10 @@
+//Represents a day on calendar with associated message
+
 package com.example.kalenpw.kalendar;
 
-/**
- * Created by kalenpw on 2/24/17.
- */
+import java.io.Serializable;
 
-public class Day {
+public class Day implements Serializable {
     //Fields
     private int _Year = -1;
     private int _Month = -1;
@@ -18,14 +18,6 @@ public class Day {
         _Month = newMonth;
         _Day = newDay;
     }
-
-    public Day(int newYear, int newMonth, int newDay, String newMessage){
-        _Year = newYear;
-        _Month = newMonth;
-        _Day = newDay;
-        _Message = newMessage;
-    }
-
 
     //Getters & Setters
     public int getYear(){
@@ -42,28 +34,6 @@ public class Day {
     }
     public String getMessage(){
         return _Message;
-    }
-
-    public String getSaveName(){
-        String str = "";
-        str += _Year;
-        str += ", " + _Month;
-        str += ", " + _Day;
-        str += ", " + _Message;
-        return str;
-    }
-
-    /**
-     * Checks if the given day is equal to the day it is being compared against
-     * @param day
-     * @return boolean - true if same day false otherwise
-     */
-    public boolean isSameDay(Day day){
-        boolean isEqual = false;
-        if(_Day == day.getDay() && _Month == day.getMonth() && _Year == day.getYear()){
-            isEqual = true;
-        }
-        return isEqual;
     }
 
 }

@@ -1,91 +1,71 @@
+//Offloads various file actions to a sepaprate class
+
 package com.example.kalenpw.kalendar;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-
-import java.io.File;
 
 import android.os.Environment;
 
-
-/**
- * Created by kalenpw on 3/2/17.
- */
-
 public class FileHandler {
-    private String _file;
-    private String _path;
     private String _completePath;
 
     //Constructor
-    public FileHandler(String completePath){
-        _completePath = completePath;
-    }
-    public FileHandler(File file){
-        _completePath = file.getAbsolutePath();
-    }
-
-    //Methods
-    //Saves text to file
-    public void saveFile(String contentToSave){
-        String previousContent = getFileLines();
-        contentToSave = previousContent + contentToSave;
-        File sdCard = Environment.getExternalStorageDirectory();
-        File directory = new File(sdCard.getAbsolutePath() + "/kalendar");
-        directory.mkdirs();
-        File file = new File(directory, "Schedule.txt");
-
-        try{
-            FileOutputStream fileOut = new FileOutputStream(file);
-            fileOut.write(contentToSave.getBytes());
-            fileOut.close();
-
-            Debugger.setDebugMode(true);
-            Debugger.print(file.getAbsolutePath());
-        }
-        catch(IOException e){
-            e.printStackTrace();
-        }
-    }
-
-//    public String readFileBeforeSaving(){
-//        File sdCard;
-//        java.nio.file.Files
-//    }
-
-
-    public String getFileLines(){
-        String fileText = "Being: ";
+    public FileHandler(){
         File sdCard = Environment.getExternalStorageDirectory();
         File directory = new File(sdCard + "/kalendar");
-        File file = new File(directory, "Schedule.txt");
+        directory.mkdirs();
+        File file =  new File(directory, "Schedule.ser");
+        String path = file.getAbsolutePath();
+        _completePath = path;
+    }
 
-        try{
-            BufferedReader br = new BufferedReader(new FileReader(file));
+    /**
+     * Deserializes an object
+     * @return ArrayList<Day> the previously saved entries
+     */
+    public ArrayList<Day> deserializeObject(){
+        ArrayList<Day> list = new ArrayList<>();
 
-            while((fileText = br.readLine()) != null){
-                fileText += fileText + "\n";
+        try {
+            ObjectInputStream objectIn = new ObjectInputStream(new FileInputStream(_completePath));
+            list = (ArrayList<Day>) objectIn.readObject();
+            objectIn.close();
 
-            }
-            br.close();
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
 
+        return list;
+    }
+
+    /**
+     * Serializes an object
+     * @param objToSerialize - object to be serialized
+     */
+    public void serializeObject(Object objToSerialize){
+        try {
+            ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(_completePath));
+            outputStream.writeObject(objToSerialize);
+            outputStream.close();
+
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            outputStream = new ObjectOutputStream(bos);
+            outputStream.writeObject(objToSerialize);
+            outputStream.close();
         }
         catch(IOException e){
             e.printStackTrace();
         }
-        return fileText;
-
     }
-
-
-
-
-
+//
 }
