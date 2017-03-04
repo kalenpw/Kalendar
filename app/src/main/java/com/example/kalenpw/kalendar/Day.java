@@ -19,6 +19,14 @@ public class Day {
         _Day = newDay;
     }
 
+    public Day(int newYear, int newMonth, int newDay, String newMessage){
+        _Year = newYear;
+        _Month = newMonth;
+        _Day = newDay;
+        _Message = newMessage;
+    }
+
+
     //Getters & Setters
     public int getYear(){
         return _Year;
@@ -36,8 +44,21 @@ public class Day {
         return _Message;
     }
 
+    public String getSaveName(){
+        String str = "";
+        str += _Year;
+        str += ", " + _Month;
+        str += ", " + _Day;
+        str += ", " + _Message;
+        return str;
+    }
 
-        public boolean isSameDay(Day day){
+    /**
+     * Checks if the given day is equal to the day it is being compared against
+     * @param day
+     * @return boolean - true if same day false otherwise
+     */
+    public boolean isSameDay(Day day){
         boolean isEqual = false;
         if(_Day == day.getDay() && _Month == day.getMonth() && _Year == day.getYear()){
             isEqual = true;

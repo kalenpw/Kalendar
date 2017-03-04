@@ -2,6 +2,7 @@ package com.example.kalenpw.kalendar;
 
 import android.content.Context;
 import android.hardware.input.InputManager;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
@@ -12,6 +13,14 @@ import android.widget.Button;
 import android.widget.CalendarView;
 import android.widget.EditText;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
@@ -21,12 +30,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     //TODO move to sepparate class
     Day  _SelectedDay = null;
-    Day[] _Days = initializeArray();
 
-    HashMap<Day, String> _Schedule = new HashMap<Day, String>();
+    //HashMap<Day, String> _Schedule = new HashMap<Day, String>();
+    ArrayList<Day> _Schedule = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //test();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //Set variables for widges
@@ -34,13 +44,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         _ButtonSave = (Button) this.findViewById(R.id.button8);
         _EditText = (EditText) this.findViewById(R.id.editText);
 
-        //Disable edit text:
-        _EditText.setFocusable(false);
-        _EditText.setEnabled(false);
-        _EditText.setCursorVisible(false);
+        //TODO update _SelectedDay so app doesn't crash if a choice is made before changing
+        //the date
 
-        //Set button values
+        //Set up button
         _ButtonSave.setText(R.string.btn_edit);
+        updateEditText();
 
         _ButtonSave.setOnClickListener(this);
         _Calendar.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
@@ -52,75 +61,117 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
+    private void test(){
+        String str = new FileHandler("/storage/emulated/0/kalendar/Schedule.txt").getFileLines();
+
+    }
+
     //Save button
-    public void onClick(View v){
+    public void onClick(View view){
         String buttonText = _ButtonSave.getText().toString();
+
         if(buttonText.equals("Edit")){
             _ButtonSave.setText(R.string.btn_save);
             updateEditText();
-//            _EditText.setFocusable(true);
-//            _EditText.setEnabled(true);
-//            _EditText.setCursorVisible(true);
-//            _EditText.setInputType(InputType.TYPE_CLASS_TEXT);
-
-
         }
         else if(buttonText.equals("Save")){
             _ButtonSave.setText(R.string.btn_edit);
             updateEditText();
-//            _EditText.setFocusable(true);
-//            _EditText.setEnabled(true);
-//            _EditText.setCursorVisible(true);
-            int index = indexFromDay(_SelectedDay);
-            if(_Days[index] != null){
-                _Days[index].setMessage(_EditText.getText().toString());
+            closeOnScreenKeyboard(view);
+            if(dayIsAlreadyInList(_SelectedDay)){
+                int indexOfDay = getIndexOfSpecificDay(_SelectedDay);
+                _SelectedDay.setMessage(_EditText.getText().toString());
+                _Schedule.remove(indexOfDay);
+                _Schedule.add(indexOfDay, _SelectedDay);
             }
-
-//        if(dayAlreadyInList(_SelectedDay)){
-//            _Schedule.put(_SelectedDay, _EditText.getText().toString());
-//        }
-
+            else{
+                _SelectedDay.setMessage(_EditText.getText().toString());
+                _Schedule.add(_SelectedDay);
+            }
+            saveFile();
         }
-        //System.out.println(buttonText);
-
 
     }
 
     private void selectedDateChanged(CalendarView view, int year, int month, int dayOfMonth){
-        //Change button to edit in case user was entering something it doesn't save
+        //Switch back to view mode
         _ButtonSave.setText(R.string.btn_edit);
         updateEditText();
+        _EditText.setText("");
 
-        //Close onscreenkeyboard if it was left open
+        closeOnScreenKeyboard(view);
+
+        Day selectedDay = new Day(year, month, dayOfMonth);
+        _SelectedDay = selectedDay;
+        if(dayIsAlreadyInList(selectedDay)){
+            int indexOfFoundDay = getIndexOfSpecificDay(selectedDay);
+            Day day = _Schedule.get(indexOfFoundDay);
+            _EditText.setText(day.getMessage());
+
+        }
+
+    }
+
+    private int getIndexOfSpecificDay(Day toFind){
+        for(Day day : _Schedule){
+            if(daysAreEqual(toFind, day)){
+                return _Schedule.indexOf(day);
+            }
+        }
+        return -1;
+    }
+
+    private void closeOnScreenKeyboard(View view){
         if (view != null) {
             InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
+    }
 
-        Day selectedDay = new Day(year, month, dayOfMonth);
-        _SelectedDay = selectedDay;
-        int index = indexFromDay(selectedDay);
-        //If no entries for day create one
-        if(_Days[index] == null){
-            _Days[index] = selectedDay;
+    private boolean daysAreEqual(Day dayOne, Day dayTwo){
+        boolean areEqual = true;
+        if(dayOne.getDay() != dayTwo.getDay() ||
+                dayOne.getMonth() != dayTwo.getMonth() ||
+                dayOne.getYear() != dayTwo.getYear()){
+            areEqual = false;
         }
+        return areEqual;
+    }
 
-        _EditText.setText(_Days[index].getMessage());
+    private boolean dayIsAlreadyInList(Day dayToCheck){
+        boolean alreadyContains = false;
+        for(Day day : _Schedule){
+            if(daysAreEqual(day, dayToCheck)){
+                alreadyContains = true;
+                return alreadyContains;
+            }
+        }
+        return alreadyContains;
+    }
 
-//        if(dayAlreadyInList(selectedDay)){
-//
-//        }
-//        else{
-//            _Schedule.put(selectedDay, "");
-//        }
-//        _EditText.setText(_Schedule.get(selectedDay));
+    private void saveFile(){
+        String fileContent = getSaveString();
+        File sdCard = Environment.getExternalStorageDirectory();
+        File directory = new File(sdCard + "/kalendar");
+        File file = new File(directory, "Schedule.txt");
+        FileHandler fileHandler = new FileHandler(file);
+        fileHandler.saveFile(fileContent);
+    }
 
+    private String getSaveString() {
+        String str = "";
+        File sdCard = Environment.getExternalStorageDirectory();
+        File directory = new File(sdCard.getAbsolutePath() + "/kalendar");
+        directory.mkdirs();
+        File file = new File(directory, "Schedule.txt");
+        String path = file.getAbsolutePath();
 
-
-
-
-
-
+        for (int i = 0; i < _Schedule.size(); i++) {
+            if (_Schedule.get(i) != null) {
+                str += _Schedule.get(i).getSaveName() + ",\n";
+            }
+        }
+        return str;
     }
 
     private void updateEditText(){
@@ -130,50 +181,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             _EditText.setFocusable(true);
             _EditText.setFocusableInTouchMode(true);
             _EditText.setCursorVisible(true);
-            //_EditText.setCursorVisible(true);
-            //_EditText.setInputType(InputType.TYPE_CLASS_TEXT);
-//            InputMethodManager im = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-//            im.showSoftInput(_EditText, InputMethodManager.SHOW_IMPLICIT);
-
-
-
         }
         else if(btnText.equals("Edit")){
             _EditText.setEnabled(true);
             _EditText.setFocusable(false);
+            _EditText.setFocusableInTouchMode(false);
             _EditText.setCursorVisible(false);
-
-
         }
     }
 
-    private boolean dayAlreadyInList(Day day){
-        boolean alreadyHas = false;
-        for(Day d :_Schedule.keySet()){
-            if(d.getDay() == day.getDay() && d.getMonth() == day.getMonth() && d.getYear() == day.getYear()){
-                alreadyHas = true;
-            }
-        }
-        return alreadyHas;
+    private File getStorageDirectory(){
+        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "Kalendar");
+        return file;
     }
 
-    private Day[] initializeArray(){
-        Day[] returnDay = new Day[20201131];
-        for(int i = 0; i < 20201131; i++){
-            returnDay[i] = null;
-        }
-        return returnDay;
-    }
 
-    private int indexFromDay(Day day){
-        int dayOfMonth = day.getDay();
-        int month = day.getMonth();
-        int year = day.getYear();
-        String combined = "" + year + month + dayOfMonth;
-        int result = Integer.parseInt(combined);
-        return result;
-
-    }
 
 
 
