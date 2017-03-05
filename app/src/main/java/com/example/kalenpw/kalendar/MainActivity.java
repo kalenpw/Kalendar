@@ -27,6 +27,7 @@ import android.widget.Button;
 import android.widget.CalendarView;
 import android.widget.EditText;
 import java.util.ArrayList;
+import java.util.GregorianCalendar;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
     CalendarView _Calendar = null;
@@ -50,14 +51,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         _ButtonSave = (Button) this.findViewById(R.id.button8);
         _EditText = (EditText) this.findViewById(R.id.editText);
 
-        //TODO update _SelectedDay so app doesn't crash if a choice is made before changing
-        //the date
+        //Set text on load
+        long today = _Calendar.getDate();
+        GregorianCalendar cal = new GregorianCalendar();
+        cal.setTimeInMillis(today);
+        int day = cal.DAY_OF_MONTH;
+        int month = cal.MONTH;
+        int year = cal.YEAR;
+        //For some reason cal.YEAR always equals 1 here. No idea why, but this fixes it
+        year = year + 2016;
+        _SelectedDay = new Day(year, month, day);
+        initializeEditTextOnLoad(_SelectedDay);
 
         //Set up button
         _ButtonSave.setText(R.string.btn_edit);
         updateEditText();
-
         _ButtonSave.setOnClickListener(this);
+
+        //Calendar date changed
         _Calendar.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
             @Override
             public void onSelectedDayChange(CalendarView view, int year, int month, int dayOfMonth) {
@@ -214,6 +225,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             _EditText.setFocusable(false);
             _EditText.setFocusableInTouchMode(false);
             _EditText.setCursorVisible(false);
+        }
+    }
+
+    /**
+     * Sets the text to the day selected on load
+     * @param day - the Day that was selected on load
+     */
+    private void initializeEditTextOnLoad(Day day){
+        if(dayIsAlreadyInList(day)){
+            int indexOfPreviouslySavedDay = getIndexOfSpecificDay(day);
+            Day dayFromSave = _Schedule.get(indexOfPreviouslySavedDay);
+            _EditText.setText(dayFromSave.getMessage());
         }
     }
 
