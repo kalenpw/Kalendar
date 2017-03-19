@@ -27,6 +27,8 @@ import android.widget.Button;
 import android.widget.CalendarView;
 import android.widget.EditText;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
@@ -52,14 +54,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         _EditText = (EditText) this.findViewById(R.id.editText);
 
         //Set text on load
-        long today = _Calendar.getDate();
-        GregorianCalendar cal = new GregorianCalendar();
-        cal.setTimeInMillis(today);
-        int day = cal.DAY_OF_MONTH;
-        int month = cal.MONTH;
-        int year = cal.YEAR;
-        //For some reason cal.YEAR always equals 1 here. No idea why, but this fixes it
-        year = year + 2016;
+        Long timeSinceEpoch = _Calendar.getDate();
+        GregorianCalendar calendar = new GregorianCalendar();
+        calendar.setTimeInMillis(timeSinceEpoch);
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+        int month = calendar.get(Calendar.MONTH);
+        int year = calendar.get(Calendar.YEAR);
         _SelectedDay = new Day(year, month, day);
         initializeEditTextOnLoad(_SelectedDay);
 
